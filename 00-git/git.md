@@ -1,4 +1,5 @@
 # git
+
 [TOC]
 
 
@@ -27,7 +28,7 @@ git config --global user.email "1312805094@qq.com"
 ## 创建仓库
 
 
-**前提：**在`github`创建新仓库
+**前提：** 在`github`创建新仓库
 
 ~~~shell 
 # 在github创建新仓库
