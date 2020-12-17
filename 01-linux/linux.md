@@ -6,6 +6,10 @@
 
 
 
+
+
+
+
 ## 常用命令
 
 | linux常用命令           | 查看版本                    |
@@ -490,7 +494,141 @@ syntax on
 
 
 
+### vim高级操作
 
+编辑模式执行
+
+```bash
+!ls 
+
+!mkdir
+...
+```
+
+
+
+#### vim多窗口操作
+
+| 多窗口操作 |                    |
+| ---------- | ------------------ |
+| sp         | 水平拆分           |
+| vs         | 垂直拆分           |
+| ctrl + w   | 切换窗口（按两下） |
+| :b 编号    | 切换文件           |
+| ls         | 展示编辑的所有文件 |
+
+#### vim -d 比较文件
+
+
+
+## python脚本
+
+
+
+### python可执行脚本
+
+`encoding: utf-8` python2需加
+
+```python
+#!/usr/bin/python3
+# encoding: utf-8
+```
+
+### sys.argv—命令行参数
+
+`sys.argv：`  是一个元组，元组中第一个是文件名，之后是命令后面自己加的参数
+
+```python
+import sys
+
+sys.argv
+```
+
+```bash
+[reddy@reddy ~]$ mycal param1 param2
+['/home/reddy/code/mycal', 'param1', 'param2']
+       Dec 2020      
+Su Mo Tu We Th Fr Sa
+```
+
+
+
+### 设置全局变量
+
+* 临时修改全局变量：export PATH=$PATH:/home/reddy/code
+
+* 永久修改全局变量：vim /etc/bashrc 
+  * 加入`export PATH=$PATH:/home/reddy/code`
+
+
+
+## ln -s —软链接
+
+创建python快捷方式
+
+```bash
+ln -s /usr/local/python37/bin/python3  /usr/bin/python3
+```
+
+
+
+## alias—起别名
+
+* 临时别名：alias 'll=ls -l'
+* 取消别名：unalias ll
+* 设置永久别名：`vim /root/.bashrc`  or `vim /用户目录/.bashrc`  or `.bash_profile`
+  * alias ll='ls -l'
+
+
+
+## 权限管理
+
+### chmod—更改权限
+
+- 说明：在linux下，所有的文件都涉及权限，分为三组：所有者、所属组、其他
+- 权限：所有文件的权限可以分为：可读(r)、可写(w)、可执行(x)，'-'表示没有改权限
+- 原理：ls -l的结果，三位一组，分为三组，刚好对应：所有者、所属组、其他
+- 修改权限：chmod，格式：`chmod [身份] [操作] [权限] 文件`
+
+| 选项 | 说明          |
+| ---- | ------------- |
+| 身份 |               |
+| u    | 所有者(user)  |
+| g    | 所属组(group) |
+| o    | 其他(other)   |
+| a    | 所有（all）   |
+| 操作 |               |
+| +    | 添加          |
+| -    | 去掉          |
+| =    | 设置          |
+| 权限 |               |
+| r    | 可读          |
+| w    | 可写          |
+| x    | 可执行        |
+
+
+
+给其他用户添加可写的权限
+
+```bash
+sudo chmod o+w 1.py，
+```
+
+
+
+若要进行递归操作，则需要添加'-R'操作
+
+```bash
+sudo chmod -R  755 ../code/
+```
+
+
+
+### chown—更改所有者
+
+~~~bash
+sudo chown -R reddy:reddy /home/reddy/
+~~~
 
 
 
