@@ -331,3 +331,120 @@ def mogu_proxies_pool(url, count=5):
     return proxies_pool
 ```
 
+
+
+#### 身份认证
+
+在访问网站时，可能会遇见认证问题，requests自带了身份认证功能。
+
+* reuqests.auth.HTTPBasicAucth对象传入auth
+
+* 给参数auth中传一个元组
+
+* requests_oauthlib
+
+
+
+
+
+~~~python
+import requests
+from requests.auth import HTTPBasicAuth
+
+url='http://localhost:5000'
+
+# 方法一
+r = request.get(url, auth=HTTPBasicAuth('username', 'passwd'))
+
+# 方法二
+r = request.get(url, auth=('username', 'passwd'))
+
+# 方法三
+# pip install requests_oauthlib
+from request_oauthlib import OAuth1
+
+auth = OAuth1('APP_KEY', 'APP_SECRET', 'USER_OAUTH_TOKEN', 'USER_OAUTH_TOKEN_SECRT')
+requests.get(url, auth=auth)
+~~~
+
+
+
+
+
+#### Prepared Request
+
+将请求表示为数据结构，其中的参数通过Request对象来表示，这种数据结构叫Prepared Request。
+
+* 用method、url、data、headers来构造Request对象
+
+* 调用Session的prepare_request()方法转换为Prepared Request对象
+
+* 调用send()方法请求即可
+
+
+
+```python
+from requests import Request, Session
+
+url = 'http://httpbin.org/post'
+
+data = {'name': 'reddy'}
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+}
+
+s = Session()
+req = Request('POST', url, headers)
+prepped = s.prepare_request(req)
+r = s.send(prepped)
+print(r.text)
+```
+
+
+
+#### 正则表达式
+
+处理字符串的强大工具，实现字符串的检索、替换、匹配验证等。
+
+对提取HTML中的信息
+
+
+
+|   方法   |                             描述                             |
+| :------: | :----------------------------------------------------------: |
+|   math   | 匹配字符串开头，如果匹配不到结果是None，如果匹配成功了结果是匹配对象。 |
+|  group   |                匹配成功，正则所匹配的内容范围                |
+|   span   |                    匹配的范围,是一个元组                     |
+|  string  |                         获取原字符串                         |
+|  search  | 在字符串中查找第一个能和正则表达式匹配的子串，找到返回对象，未找到返回None。 |
+| findall  | 获取字符串中所有满足正则表达式的子串，返回一个列表，列表中的元素是字符串 |
+| finditer | 获取字符串中所有满足正则表达式的子串。返回一个迭代器，迭代器中的元素是匹配对象 |
+|          |                                                              |
+
+##### 通用匹配
+
+`.`可以匹配任意字符，`*`代表匹配前的字符0获取n次，他们组合匹配任意字符。
+
+##### 贪婪和非贪婪
+
+正常情况都是贪婪，非贪婪用`?`表示。
+
+`.*?`在字符串末尾，就可能匹配不到任何内容，尽可能少的匹配字符。
+
+
+
+##### 修饰符
+
+| 修饰符 | **描述**                                                     |
+| ------ | ------------------------------------------------------------ |
+| re.I   | 使匹配对大小写不敏感                                         |
+| re.L   | 做本地化识别（locale-aware）匹配                             |
+| re.M   | 多行匹配，影响 ^ 和 $                                        |
+| re.S   | 使 . 匹配包括换行在内的所有字符                              |
+| re.U   | 根据Unicode字符集解析字符。这个标志影响 \w, \W, \b, \B.      |
+| re.X   | 该标志通过给予你更灵活的格式以便你将正则表达式写得更易于理解。 |
+
+
+
+##### 转义匹配  /
+
