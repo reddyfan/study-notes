@@ -24,7 +24,7 @@ def to_csv(filename, data, columns=None, encoding='utf-8'):
     flag = os.path.exists(filename)
     with open(filename, 'a', encoding=encoding, newline='') as file:
         csv_file = csv.writer(file)
-        if not flag and columns:
+        if (not flag) and columns:
             csv_file.writerow(columns)
 
         for item in data:
