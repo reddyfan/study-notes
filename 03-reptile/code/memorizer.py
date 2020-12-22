@@ -27,5 +27,17 @@ def to_csv(filename, data, columns=None, encoding='utf-8'):
         if (not flag) and columns:
             csv_file.writerow(columns)
 
-        for item in data:
-            csv_file.writerow(item)
+        csv_file.writerows(data)
+
+
+def read_csv(filename, encoding='utf-8'):
+    """
+    读取csv文件 
+    :param filename: 文件名
+    :param encoding: 编码
+    :return: 读取的文件数据
+    """
+    if os.path.exists(filename):
+        with open(filename, 'r', encoding=encoding) as file:
+            reader = csv.reader(file)
+            return [item for item in reader]

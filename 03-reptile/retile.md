@@ -1,4 +1,4 @@
-# reptile
+# Spider
 
 ## 1、开发环境配置
 
@@ -472,7 +472,24 @@ XPath于1999年11月16日成为W3C标准。
 |        @        |                   选取属性                   |
 | [@class="item"] |                   属性匹配                   |
 |     text()      |               获取节点中的文本               |
-|                 |                                              |
+
+#### 初始化
+
+~~~python
+from lxml import etree
+
+# 字符串初始化
+html = etree.HTML(text)
+res = etree.tostring(html)
+print(res.decode('utf-8'))
+
+# 文件初始化
+html = etree.parse('./index.html', etree.HTMLParser())
+~~~
+
+
+
+
 
 #### 文本获取
 
@@ -544,7 +561,7 @@ BS在解析时实际依赖解析器，处理支持Python标准库中的HTML解�
 
 
 
-#### BS支持的解析器
+#### BS解析器
 
 |     解析器      |              使用方法               |                           优势                            |                       劣势                        |
 | :-------------: | :---------------------------------: | :-------------------------------------------------------: | :-----------------------------------------------: |
@@ -555,7 +572,668 @@ BS在解析时实际依赖解析器，处理支持Python标准库中的HTML解�
 
 
 
+
+
+~~~python
+from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(text, 'lxml')
+print(soup.p.string)
+
+~~~
+
+
+
+#### 节点选择器
+
+| 属性              | 释义                                                         |
+| ----------------- | ------------------------------------------------------------ |
+| string            | 获取文本的值                                                 |
+| name              | 获取节点的名称                                               |
+| attrs             | 获取所有的属性，可用attrs['name']获取name的属性值            |
+| contents          | 得到一个子节点列表                                           |
+| children          | 得到所有的子节点，返回一个生成器类型                         |
+| descendants       | 得到所有的子孙节点，返回一个生成器类型。递归查询所有节点，得到所有的子孙节点 |
+| parent            | 获取某个节点元素的父节点                                     |
+| parents           | 获取所有祖先节点，返回一个生成器类型                         |
+| previous_sibling  | 上一个兄弟节点                                               |
+| next_sibling      | 下一个兄弟节点                                               |
+| previous_siblings | 所有前面的兄弟节点                                           |
+| next_siblings     | 所有后面的兄弟节点                                           |
+
+
+
+#### 方法选择器
+
+进行比较复杂的选着
+
+|                     查询方法                      |                             释义                             |
+| :-----------------------------------------------: | :----------------------------------------------------------: |
+| find_all(name, attrs , recursive, text, **kwargs) | 传入一些属性或文本，得到复合条件的元素<br />name：节点名<br />attrs：通过属性查询，用字典。<br />常用的属性可以用正常传值的方式<br /><br />text：匹配节点的文本<br /> |
+|                      find()                       |                     得到第一个匹配的元素                     |
+|                  find_parents()                   |                        所有的祖先节点                        |
+|                   find_parent()                   |                          直接父节点                          |
+|                previous_sibling()                 |                        上一个兄弟节点                        |
+|                  next_sibling()                   |                        下一个兄弟节点                        |
+|                previous_siblings()                |                      所有前面的兄弟节点                      |
+|                  next_siblings()                  |                      所有后面的兄弟节点                      |
+|                  find_all_next()                  |                 返回节点后所有复合条件的节点                 |
+|                    find_next()                    |                     第一个符合条件的节点                     |
+|                find_all_previous()                |                   节点前所有符合条件的节点                   |
+|                  find_previous()                  |                  节点前第一个符合条件的节点                  |
+
+
+
+#### CSS选择器
+
+|                             方法                             |     释义      |
+| :----------------------------------------------------------: | :-----------: |
+|                           select()                           | 查询,支持嵌套 |
+| soup.selelct('ul').**attrs['id']** / soup.**selelct('ul')['id']** |   获取属性    |
+|                     get_text() / string                      |   获取文本    |
+
+
+
 ### pyquery
+
+
+
+需要传入HTML文本来初始化PyQuery对象。初始化的的方式有传入字符串、URL、文件名。
+
+#### 初始化
+
+~~~python
+from pyquery import PyQuery as pq
+
+# 字符串初始化
+html = ''' <html>....</html>'''
+doc = pq(html)
+
+# URL初始化
+doc = pq(url='https://www.baidu.com')
+
+# 文件初始化
+doc = pd(filename='demo.html')
+~~~
+
+
+
+#### 函数
+
+|     函数      |                             释义                             |
+| :-----------: | :----------------------------------------------------------: |
+|    find()     |                      符合条件的所有节点                      |
+|  children()   | 所有符合条件的子孙节点，进行子节点筛选可以传入css选择器如'.active or #hi' |
+|   parent()    |              获取某个节点的父节点，PyQuery类型               |
+|   parents()   |           返回所有的祖先节点，也可以传入css选择器            |
+|  siblings()   |                         获取兄弟节点                         |
+|    items()    |  遍历返回的多个节点。放回的都是PyQuery类型，并没有返回列表   |
+|    attr()     |              获取属性，只会得到第一个节点的属性              |
+|    text()     |         获取文本，忽略所有的HTML，只返回文字（所有）         |
+|    html()     |                   第一个节点内部的HTML内容                   |
+|  addClass()   |                      添加class(第一个)                       |
+| removeClass() |                      移除class(第一个)                       |
+|   remove()    |                           移除节点                           |
+|   append()    |                             添加                             |
+|    empty()    |                                                              |
+|   prepend()   |                                                              |
+
+
+
+#### 属性
+
+| 属性 |                                    |
+| ---- | ---------------------------------- |
+| attr | 获取属性，只会得到第一个节点的属性 |
+
+
+
+#### 伪类选择器
+
+* first-child
+* last-child
+* nth-child(n)
+* gt(n)
+* nth-child(2n)
+* contains(second) 
+
+
+
+## 5、数据存储
+
+### 文件存储
+
+#### TXT
+
+操作简单、几乎兼容任何平台，但不利于检索。
+
+对检索和数据结构要求不高，追求方便，可用txt。
+
+
+
+
+
+#### JSON
+
+全称JavaScript Object Notation，Javascript对象标记。
+
+
+
+#### CSV
+
+
+
+
+
+### 关系型数据库存储
+
+#### MySQL
+
+关系型数据库是基于关系模型的数据库，而关系模型是通过二维表来保存的。
+
+
+
+PyMySQL是通过connect()方法获取连接对象，连接成功之后再调用cursor()方法获得操作游标，利用游标来执行SQL语句。
+
+
+
+|                            方法                             |                 释义                 |
+| :---------------------------------------------------------: | :----------------------------------: |
+| connect(host=host, user=user, password=password, port=port) |             获取连接对象             |
+|                          cursor()                           |               获取游标               |
+|                          execute()                          |             执行SQL语句              |
+|                         fetchone()                          | 获得结果第一条数据，放回结果元组形式 |
+|                         fetchall()                          |          得到结果的所有数据          |
+|                          commit()                           |                 提交                 |
+|                         roolback()                          |                 回滚                 |
+|                                                             |                                      |
+|                                                             |                                      |
+
+
+
+```python
+host = 'ip'
+user = 'username'
+password = 'password'
+port = 3306 # 端口
+
+
+conn = pymysql.connect(host=host, user=user, password=password, port=port)
+cursor = conn.cursor()
+```
+
+
+
+##### 操作
+
+```python
+import csv
+import os
+
+import pymysql
+
+
+
+host = 'ip'
+user = 'username'
+password = 'password'
+port = 3306 # 端口
+
+
+create_table = '''
+create table if not exists spiders.movies_top100
+(
+    id           int         not null auto_increment,
+    rank         int unique,
+    image_url    varchar(255),
+    name         varchar(50) not null,
+    star         varchar(50) not null,
+    release_data datetime    not null,
+    country      varchar(20),
+    score        double      not null,
+    primary key (id)
+)
+'''
+
+
+
+insert_data = '''
+insert into spiders.movies_top100 (`rank`, image_url, `name`, star, release_data, country, score) values 
+'''
+
+
+
+conn = pymysql.connect(host=host, user=user, password=password, port=port)
+with conn.cursor() as cursor:
+        try:
+           cursor.execute('create database if not exists spiders default  character set utf8')
+            cursor.execute(create_table)
+            data = read_csv('top.csv')[1:]
+            data = str(tuple(map(lambda ele: tuple([int(ele[0])] + ele[1:]), data)))[1:-1]
+            insert_data += data
+            print(insert_data)
+            cursor.execute(insert_data)
+            conn.commit()
+            print('插入成功')
+        except:
+            conn.rollback()
+            print('回滚')
+```
+
+
+
+所有数据一般用while循环加fetchone()来获取，而不是fetchall()，数据量很大，会占用很大的开销。一般逐行获取。
+
+~~~python
+row = cursor.fetchone()
+
+while row:
+    row = cursor.fetchone()
+~~~
+
+
+
+
+
+### 非关系数据存储
+
+全称Not Only SQL ，意为不仅仅SQL，泛指非关系数据库。NoSQL是基于键值对的，而不需要进行SQL层的解析，数据之间没有耦合性，性能非常高。
+
+####  MongoDB
+
+由C++语言编写的非关系数据库，一个基于分布式文件存储的开源数据库系统，内容存储形式类似JSON对象。
+
+#####  连接Mongo
+
+调用MongoClient类型获取连接对象
+
+#### Redis
+
+
+
+
+
+
+
+
+
+## 6、Ajax数据爬取
+
+原始的页面最初不会包含某些数据，原始页面加载完后，回再向服务器请求某个接口获取数据，然后数据才会被处理从而呈现到网页上。
+
+Ajax，全称Asynchronous JavaScript and XML ，即异步的JavaScript和XML。它不是编程语言，而是利用js在整个网页不被刷新，页面链接不改变的情况下与服务器进行数据交换并更新部分网页的技术。
+
+
+
+
+
+## 7、动态渲染页面爬取
+
+#### 为什么要动态获取
+
+页面可能部分是JS生成的，并非原始的HTML代码。
+
+亦有可能是ECharts经过JS计算之后生成的。
+
+亦有即使是Ajax获取的数据，但其接口含有很多加密参数，很难直接找出规律。
+
+
+
+#### 模拟浏览器运行的库
+
+模拟浏览器运行，看到的什么，爬到的就是什么，不需要管源码是什么样的。**可见即可爬**
+
+* Selenium
+
+* Splash
+
+* PyV8
+
+* Ghost
+
+
+
+#### Selenium
+
+自动测试化工具，利用它可以驱动浏览器执行特定的动作，通过驱动获取页面源代码。
+
+支持非常多的浏览器，还有Android、BlackBerry等手机浏览器，也支持无界面浏览器PhantomJS。
+
+
+
+##### 声明浏览器对象
+
+~~~python
+from selenium import webdriver
+
+browser = webdriver.Chrome()
+browser = webdriver.FireFox()
+browser = webdriver.Edge()
+browser = webdriver.Safari()
+~~~
+
+
+
+|               方法               |         释义         |
+| :------------------------------: | :------------------: |
+|             get(url)             |       请求页面       |
+|          page_source()           |    获取页面源代码    |
+|             close()              |      关闭浏览器      |
+
+
+
+
+##### 查找节点
+
+除了自带的方法、还可以根据XPath、CSS选择器等方式获取
+
+|               方法               |         释义         |
+| :------------------------------: | :------------------: |
+|      find_element_by_name()      |    根据name值获取    |
+|       ind_element_by_id()        |     根据id值获取     |
+|  find_element_by_css_selector()  |  根据css选择器获取   |
+|     find_element_by_xpath()      |    根据xpath获取     |
+|  find_element(By.ID,'id value')  | 通用查找元素（单个） |
+| find_elements(Bys.ID,'id value') | 通用查找元素（多个） |
+
+###### 单个节点
+
+* find_element_by_id
+* find_element_by_name
+* find_element_by_xpath
+* find_element_by_link_text
+* find_element_by_parial_text
+* find_element_by_tag_name
+* find_element_by_classname
+* find_element_by_css_selector
+
+
+
+###### 通用查找
+
+~~~python
+from selenium.webdriver.common.by import By
+
+browser.find_element(By.ID,'q')
+~~~
+
+
+
+###### 多个节点
+
+在获取单个的element加上s既可
+
+* find_elements_by_id
+* find_elements_by_name
+* find_elements_by_xpath
+* find_elements_by_link_text
+* find_elements_by_parial_text
+* find_elements_by_tag_name
+* find_elements_by_classname
+* find_elements_by_css_selector
+
+
+
+
+
+##### 节点交互
+
+
+
+驱动执行一些操作，让浏览器模拟一些动作。
+
+|    方法     |   释义   |
+| :---------: | :------: |
+| send_keys() | 输入文字 |
+|   clear()   | 清空文字 |
+|  clikck()   | 点击按钮 |
+|             |          |
+
+
+
+##### 动作链
+
+没有特定的执行对象，如鼠标拖拽，键盘按键等，就是动作链
+
+```python
+from selenium import webdriver
+from selenium.webdriver import ActionChains
+
+browser = webdriver.Chrome()
+
+url = 'https://www.runoob.com/try/try.php?filename=jqueryui-example-draggable'
+browser.get(url)
+browser.switch_to.frame('iframeResult')
+source = browser.find_element_by_css_selector('#draggable')
+target = browser.find_element_by_css_selector('#draggable')
+actions = ActionChains(browser)
+actions.drag_and_drop(source,target)
+actions.perform()
+```
+
+
+
+##### 执行JS
+
+execute_script()
+
+```python
+from selenium import webdriver
+
+browser = webdriver.Chrome()
+
+browser.get('https://www.zhihu.com/explore')
+browser.execute_script('window.scrollTo(0, document.body.scrollHeight)') # 到最底部
+browser.execute_script('alert("to Bottom")')
+```
+
+
+
+##### 获取节点信息
+
+selenium提供了选择节点的方法，放回类型是WebElement类型，也有相关的方和属性来直接获取节点信息。
+
+|  方法 or 属性   |          释义          |
+| :-------------: | :--------------------: |
+| get_attribute() |        获取属性        |
+|      text       |       获取文本值       |
+|       id        |         获取id         |
+|    location     | 节点在页面中的相对位置 |
+|    tag_name     |      获取标签名称      |
+|      size       |   节点的大小（宽高）   |
+|                 |                        |
+
+
+
+##### 切换Frame
+
+网页中有一种节点叫iframe，也就是子Frame，相当于子页面，他在结构和外部网页的结构完全一致。
+
+默认是在父级Frame操作（正常页面）,切换到子Frame。**switch_to.frame()**方法。
+
+
+
+##### 延时等待
+
+get()方法会在网页框架加载结束后结束执行，此时获取的page_source()，可能不是浏览器完全加载的页面，可能由额外的Ajax请求，此时就需延时等待。
+
+###### 隐式等待
+
+ **browser.implicitly_wait(10)**
+
+selenium没有在dom中找到节点，将会继续等待到设定时间（默认为0）后，如果最后没有找到就抛节点找不到异常。
+
+当查找节点时，没有立即出现的时候，等待一段时间再去找dom，默认时间为0.
+
+```python
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+
+browser = webdriver.Chrome()
+# 隐式等待
+try:
+    browser.implicitly_wait(10)
+    browser.get('https://www.zhihu.com/explore')
+    it = browser.find_element_by_id('root')
+    print(it.text)
+except NoSuchElementException:
+    print('没有该节点')
+```
+
+
+
+###### 显示等待
+
+隐式等待，只规定了时间，页面的加载时间会受到网络条件的影响
+
+显示等待，指定要查找的节点，然后指定一个最长等待时间。如果在规定时间内加载处理啊，就放回查找的节点；如果在规定时间未加载出来则抛超时异常。
+
+```python
+browser.get('https://www.taobao.com')
+try:
+    wait = WebDriverWait(browser, 3)
+    it = wait.until(EC.presence_of_element_located((By.ID, 'q')))
+    btn = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.btn-serach')))
+    print(it, btn)
+except TimeoutException:
+    print('没有该节点')
+```
+
+
+
+
+
+###### 等待条件
+
+| 方法                          |                释义                |
+| :---------------------------- | :--------------------------------: |
+| presence_of_element_located() | 节点加载出来，参数时节点的定位元组 |
+| element_to_be_clickable()     |             节点可点击             |
+| titile_is                     |              标题内容              |
+| title_contains                |           标题包含某内容           |
+
+
+
+```python
+from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as  EC
+from selenium.webdriver.support.wait import WebDriverWait
+
+# 显示等待
+browser.get('https://www.taobao.com')
+try:
+    wait = WebDriverWait(browser, 3)
+    it = wait.until(EC.presence_of_element_located((By.ID, 'q')))
+    btn = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.btn-serach')))
+    print(it, btn)
+except TimeoutException:
+    print('没有该节点')
+```
+
+
+
+##### 前进和后退
+
+forward()、back()
+
+```python
+import time
+
+from selenium import webdriver
+
+browser = webdriver.Chrome()
+browser.get('https://www.baidu.com')
+browser.get('https://www.taobao.com')
+browser.get('https://www.jd.com')
+browser.back()
+time.sleep(1)
+browser.forward()
+browser.close()
+```
+
+
+
+
+
+##### Cookies
+
+对cookies进行获取、添加、删除等操作。
+
+* get_cookies()
+
+* get_cookie()
+
+* add_cookie()
+
+* delete_cookie()
+
+* delete_cookies()
+
+  
+
+##### 选项卡管理
+
+**browser.window_handles[1]**
+
+```python
+import time
+
+from selenium import webdriver
+
+browser = webdriver.Chrome()
+browser.get('https://www.baidu.com')
+# 打开新窗口
+browser.execute_script('window.open()')
+print(browser.window_handles)
+# 切换窗口
+browser.switch_to.window(browser.window_handles[1])
+browser.get('https://www.jd.com')
+time.sleep(1)
+browser.switch_to.window(browser.window_handles[0])
+browser.get('https://www.taobao.com')
+```
+
+
+
+###### 异常处理
+
+* NoSuchElementException：没有找到节点
+* TimeoutException：超时
+
+
+
+### Splash
+
+是一个JS渲染服务，还是应该带有HTTP API 的轻量级浏览器，同时对接了Python中的Twisted和QT库。同样可以用它实现动态渲染页面的抓取。
+
+功能：
+
+* 异步处理多个网页渲染过程
+* 获取渲染后的页面的源代码或截图
+* 通过关闭图片渲染或者使用Adblock规则来加快页面渲染速度
+* 可执行特定的js脚本
+* 可通过Lua脚本来控制页面的渲染过程
+* 获取渲染的详细过程并通过HAR(HTTP Archive)格式呈现
+
+
+
+
+
+
+
+
+
+## 8、验证码的识别
+
+
+
+## 9、代理的使用
+
+
+
+## 10、模拟登录
 
 
 
