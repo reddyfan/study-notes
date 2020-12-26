@@ -1,5 +1,10 @@
 # tesserocr 安装和使用
 
+- [tesserocr 安装和使用](#tesserocr-安装和使用)
+  - [安装步骤：](#安装步骤)
+    - [tesseract](#tesseract)
+    - [pip install wheel pillow](#pip-install-wheel-pillow)
+    - [安装tesserocr](#安装tesserocr)
 
 
 tesserocr是python的应该OCR的识别库，是对tesseract做了一层封装，它的核心就是tesseract。因此在安装tesserocr应先安装tesseract。
