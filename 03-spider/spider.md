@@ -1572,3 +1572,371 @@ if __name__ == '__main__':
 
 ~~~
 
+
+
+
+
+### 京东商品爬取
+
+```python
+"""
+@Time ： 2020/12/22 20:27
+@Auth ： 侬&码
+@File ：jdgoods.py
+@Description :
+"""
+import os
+import time
+
+import pymongo
+import ujson
+from pyquery import PyQuery as pq
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
+
+
+def load_json_config(filename):
+    """
+    读取配置json文件
+    :param filename: 文件名
+    :return:
+    """
+    with open(filename, 'r', encoding='utf-8') as file:
+        loads = ujson.loads(file.read())
+    return loads
+
+
+cfg = load_json_config('config.json')
+
+
+def wait_located(wait, by: By, locator):
+    return wait.until(expected_conditions.presence_of_element_located((by, locator)))
+
+
+class Mongo():
+    def __init__(self):
+        global cfg
+
+        if cfg:
+            print(cfg)
+            self.conn = pymongo.MongoClient(host=cfg['ip'], port=cfg['mongo']['port'])
+            print(type(self.conn))
+            self.db = self.conn[cfg['mongo']['db']]
+            self.db = self.db.authenticate(cfg['mongo']['auth']['name'], cfg['mongo']['auth']['passwd'])
+
+    def use_db(self, db):
+        self.db = self.conn[db]
+        return self.db
+
+    def insert(self, table, data):
+        if type(data) == list:
+            self.db[table].insert_many(data)
+        elif type(data) == dict:
+            self.db[table].insert_one(data)
+        data.clear()
+        print("插入完成")
+
+
+KEYWORD_PAGE_FILE_NAME = 'keyword_page.json'
+
+
+class JDGoods:
+    """ 提取京东商品 """
+
+    def __init__(self, keyword):
+        self.keyword = keyword
+        self.driver = webdriver.Chrome()
+        self.driver.maximize_window()
+        self.wait = WebDriverWait(self.driver, 10)
+        self.url = f'https://search.jd.com/Search?keyword={keyword}'
+        self.driver.get(self.url)
+        self.target = 0
+        self.page = 1
+        self.flag = True
+        self.html = None
+        self.data = []
+
+    def redirect(self, page, target=0):
+        if self.flag:
+            if os.path.exists(KEYWORD_PAGE_FILE_NAME):
+                with open(KEYWORD_PAGE_FILE_NAME, 'r', encoding='utf-8') as file:
+                    data = ujson.loads(file.read())
+                    if self.keyword in data.keys():
+                        print(f'上次爬到{data[self.keyword]}页')
+                        self.page = data[self.keyword] + 1
+                    else:
+                        self.page = page
+            time.sleep(3)
+            if target:
+                self.target = target
+            else:
+                self.target = self.driver.find_element_by_xpath('//*[@id="J_topPage"]/span/i').text
+                print(f'将爬取{self.target}')
+            self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+            wait_located(self.wait, By.XPATH, '//*[@id="J_goodsList"]/ul/li[60]')
+            self.flag = False
+        it = self.driver.find_element_by_xpath('//*[@id="J_bottomPage"]/span[2]/input')
+        it.clear()
+        it.send_keys(self.page)
+        time.sleep(2)
+        self.driver.find_element_by_xpath('//*[@id="J_bottomPage"]/span[2]/a').click()
+
+    def access_good(self):
+        print(f'正在爬取第{self.page}页')
+        time.sleep(2)
+        # self.driver.get_screenshot_as_file(f'./images/x-{self.page}.png')
+        self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+        time.sleep(3)
+        wait_located(self.wait, By.XPATH, '//*[@id="J_goodsList"]/ul/li[60]/div/div[4]/strong/a')
+        self.html = self.driver.page_source
+
+    def extraction_data(self):
+        if self.html:
+            doc = pq(self.html)
+            items = doc('#J_goodsList > ul > li ').items()
+            img = 'div > div.p-img > a > img'
+            for item in items:
+                image = item.find(img).attr('src') if item.find(img) \
+                    .attr('src') else item.find(img).attr('data-lazy-img')
+                goods = {
+                    'title': item.find('div > div.p-name.p-name-type-2 > a > em').text(),
+                    'image': 'https:' + image,
+                    'price': item.find('div > div.p-price > strong > i').text(),
+                    'evaluate': item.find('div > div.p-commit > strong > a ').html(),
+                    'shop_name': item.find('div > div.p-shop > span > a').text(),
+                }
+                self.data.append(goods)
+
+    def close(self):
+        if os.path.exists(KEYWORD_PAGE_FILE_NAME):
+            with open(KEYWORD_PAGE_FILE_NAME, 'r', encoding='utf-8') as file:
+                data = ujson.loads(file.read())
+        with open(KEYWORD_PAGE_FILE_NAME, 'w', encoding='utf-8') as file:
+            data[self.keyword] = self.page
+            file.write(ujson.dumps(data))
+
+
+if __name__ == '__main__':
+    jd = JDGoods('ipad')
+    mongo = Mongo()
+    db = mongo.use_db('spider')
+    lis = []
+    while True:
+        jd.redirect(1)
+        lis.append(jd.access_good())
+        jd.extraction_data()
+        mongo.insert('goods', jd.data)
+        if jd.page == jd.target:
+            break
+        jd.page += 1
+    print(f'爬了{len(jd.data)}条数据')
+    jd.close()
+```
+
+
+
+### 点触验证码登录boss直聘
+
+```python
+"""
+@Time ： 2020/12/25 9:34
+@Auth ： 侬&码
+@File ：verify_login.py
+@Description :
+"""
+import time
+from hashlib import md5
+from io import BytesIO
+
+import requests
+from PIL import Image
+from selenium import webdriver
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+
+CJY_USERNAME = 'xxxx'
+CJY_PASSWORD = 'xxxx'
+CJY_SOFT_ID = 911112
+CJY_KIND = 9005
+
+
+class CJY(object):
+    def __init__(self, username, password, soft_id):
+        self.username = username
+        password = password.encode('utf8')
+        self.password = md5(password).hexdigest()
+        self.soft_id = soft_id
+        self.base_params = {
+            'user': self.username,
+            'pass2': self.password,
+            'softid': self.soft_id,
+        }
+        self.headers = {
+            'Connection': 'Keep-Alive',
+            'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0)',
+        }
+
+    def PostPic(self, im, codetype):
+        """
+        im: 图片字节
+        codetype: 题目类型 参考 http://www.chaojiying.com/price.html
+        """
+        params = {
+            'codetype': codetype,
+        }
+        params.update(self.base_params)
+        files = {'userfile': ('ccc.jpg', im)}
+        r = requests.post('http://upload.chaojiying.net/Upload/Processing.php', data=params, files=files,
+                          headers=self.headers)
+        return r.json()
+
+    def ReportError(self, im_id):
+        """
+        im_id:报错题目的图片ID
+        """
+        params = {
+            'id': im_id,
+        }
+        params.update(self.base_params)
+        r = requests.post('http://upload.chaojiying.net/Upload/ReportError.php', data=params, headers=self.headers)
+        return r.json()
+
+
+class BaseSn:
+    """ selenium 登录类 """
+
+    def __init__(self, url: str):
+        """
+        初始化
+        :param url: 登录url
+        """
+        self.chrome = webdriver.Chrome()
+        self.chrome.maximize_window()
+        self.wait = WebDriverWait(self.chrome, 15)
+        self.chrome.get(url)
+
+    def wait_key(self, action, by: By, locator: str):
+        """
+        延迟WebElement对象
+        :param action: 具体行为
+        :param by: 选择器类型
+        :param locator: 选择器字符串
+        :return:
+        """
+        if action == 'pl' or action == 0:
+            return self.wait.until(EC.presence_of_element_located((by, locator)))
+        elif action == 'ec' or action == 1:
+            return self.wait.until(EC.element_to_be_clickable((by, locator)))
+
+
+class VerifyLogin:
+    """ 登录验证类 """
+
+    def __init__(self, cjy: CJY, obj: BaseSn, image_obj):
+        """
+
+        :param cjy: 超级鹰对象
+        :param obj: 登录对象
+        :param image_obj: 验证码图片对象
+        """
+        self.cjy = cjy
+        self.obj = obj
+        self.image_obj = image_obj
+
+    def get_position(self):
+        """
+        获取验证码图片位置
+        :return: 位置
+        """
+        location = self.image_obj.location
+        size = self.image_obj.size
+        top, bottom, left, right = location['y'], location['y'] + size['height'], location['x'], location['x'] + size[
+            'width']
+
+        return left, top, right, bottom
+
+    def get_verify_image(self):
+        """
+        获取验证图片对象
+        :return:
+        """
+        self.obj.chrome.get_screenshot_as_file('c.png')
+        png = Image.open(BytesIO(self.obj.chrome.get_screenshot_as_png()))
+        return png.crop(self.get_position())
+
+    def get_captcha_json(self):
+        """
+        获取超级鹰验证json
+        :return:
+        """
+        img = self.get_verify_image()
+        bytes_array = BytesIO()
+        img.save(bytes_array, format='PNG')
+        captcha_json = self.cjy.PostPic(bytes_array.getvalue(), CJY_KIND)
+        print(captcha_json)
+        return captcha_json
+
+    def get_offset(self):
+        """
+        获取验证字符的偏移量
+        :return:
+        """
+        groups = self.get_captcha_json().get('pic_str').split('|')
+        locations = [[int(number) for number in group.split(',')] for group in groups]
+        print(locations)
+        return locations
+
+    def click_words(self):
+        """
+        动作链验证验证码
+        :return:
+        """
+        for location in self.get_offset():
+            ActionChains(self.obj.chrome) \
+                .move_to_element_with_offset(
+                self.image_obj, location[0], location[1]).click().perform()
+
+
+if __name__ == '__main__':
+    boos = BaseSn('https://login.zhipin.com/')
+    cjy = CJY(CJY_USERNAME, CJY_PASSWORD, CJY_SOFT_ID)
+    chrome = boos.chrome
+    sms = boos.wait_key(1, By.CLASS_NAME, 'link-sms')
+    sms.click()
+    phone_input = boos.wait_key(0, By.NAME, 'phone')
+    phone_input.send_keys('18783935413')
+    # print(chrome.page_source)
+    btn = boos.wait_key(0, By.XPATH, '//*[@id="wrap"]/div[2]/div[2]/div[2]/div[1]/form/div[4]/div[1]')
+    btn.click()
+    time.sleep(1)
+    box = boos.wait_key(0, By.XPATH, '/html/body/div[5]')
+    for i in range(3):
+        img_obj = boos.wait_key(0, By.CLASS_NAME, 'geetest_widget')
+        vl = VerifyLogin(cjy, boos, img_obj)
+        vl.click_words()
+        time.sleep(2)
+        btn = boos.wait_key(1, By.CLASS_NAME, 'geetest_commit_tip')
+        btn.click()
+        time.sleep(2)
+        if not box.is_displayed():
+            print('验证成功')
+            break
+        print('验证失败，重试！')
+
+    print('-----')
+    time.sleep(2)
+    sms_btn = boos.wait_key(1, By.XPATH, '//*[@id="wrap"]/div[2]/div[2]/div[2]/div[1]/form/div[5]/span/button')
+    sms_btn.click()
+    tel = boos.wait_key(0, By.NAME, 'phoneCode')
+    tel.clear()
+    code = input('输入手机验证码：')
+    tel.send_keys(code)
+    chrome.find_element_by_xpath('//*[@id="wrap"]/div[2]/div[2]/div[2]/div[1]/form/div[6]/button').click()
+
+    time.sleep(3)
+    boos.chrome.close()
+```
