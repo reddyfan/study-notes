@@ -1908,7 +1908,7 @@ if __name__ == '__main__':
     sms = boos.wait_key(1, By.CLASS_NAME, 'link-sms')
     sms.click()
     phone_input = boos.wait_key(0, By.NAME, 'phone')
-    phone_input.send_keys('18783935413')
+    phone_input.send_keys('13895415358')
     # print(chrome.page_source)
     btn = boos.wait_key(0, By.XPATH, '//*[@id="wrap"]/div[2]/div[2]/div[2]/div[1]/form/div[4]/div[1]')
     btn.click()
