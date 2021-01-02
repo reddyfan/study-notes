@@ -163,7 +163,32 @@ Selenium是一个自动测试化工具，需要ChromeDriver配合使用
 
 #### PhantomJS
 
+是一个无界面的、可脚本编程的WebKit浏览器引擎，支持多种Web标准：Dom操作、CSS选择器、JSON、Canvas以及SVG.
+
+Selenium支持PhantomJS，在运行时不弹出浏览器。
+
+[Phantomjs下载地址](https://phantomjs.org/download.html)
+
+* 将文件所在路径里面bin文件夹下的phantomjs.exe配置到环境变量里面
+* 也可以将phantomjs.exe复制到python的scirpts文件里
+
+
+
 #### aiohttp
+
+requests是一个阻塞的HTTP请求库，当发出一个请求后，程序会等待服务的响应，知道得到响应后才会经行下一步的处理。这是一个耗时操作。
+
+在等待的过程中做一些其他事可以提高爬取效率，如请求的调度、响应的处理等。
+
+aiohttp提供异步Web服务的库，从python3.5版本开始，python中加入了async/await关键字，使得回调的写法更加直观和人性化。
+
+直接 pip install aiohttp
+
+官方还推荐安装两个库：一个是字符编码检测库cchardet，还一个是加速DNS的解析库aiodns
+
+pip install cchardet aiodns
+
+
 
 
 
@@ -212,6 +237,65 @@ pip3 install tesserocr pillow
 
 
 ### 爬虫框架
+
+####  pyspider的安装
+
+pip install pyspider
+
+
+
+安装完成之后，命令行启动pyspider
+
+pyspider all
+
+
+
+##### 常见错误
+
+<font color="red">ERROR: Command errored out with exit status 10: python setup.py egg_info Check the logs for full command output.</font>
+
+需要安装PyCul库，从<https://www.lfd.uci.edu/~gohlke/pythonlibs/#pycurl>找对应的Python版本，下载wheel文件即可。
+
+![](./images/PyCurl.png)
+
+
+
+<font color="red">SyntaxError: invalid syntax</font>
+
+<https://blog.csdn.net/u012424313/article/details/89511520>
+
+
+
+#### Scrapy
+
+十分强大的爬虫框架、依赖的库比较多，至少需要依赖库由Twisted14.0、lxml3.4和pyOpenSSL0.14。
+
+在不同的平台环境下，他所依赖的库也不一样，安装之前要确保安装了基本的库。
+
+##### windows下安装
+
+* pip install lxml
+
+* 安装pyOpenSSL
+
+  * [下载wheel文件](https://pypi.python.org/pypi/pyOpenSSL#downloads)
+
+    ![](./images/pyOpenSSL-wheel.png)
+
+  * pip install  pyOpenSSL-20.0.1-py2.py3-none-any.whl
+
+* 安装Twisted
+
+  * [下载wheel文件](https://www.lfd.uci.edu/~gohlke/pythonlibs/#twisted)
+
+    ![](./images/twisted-wheel.png)
+
+* 安装pyWin32
+
+  * [链接](https://sourceforge.net/projects/pywin32/files/pywin32/Build%20221)
+  * 双击.exe文件安装即可
+
+* pip install Scrapy
 
 
 
@@ -1569,6 +1653,91 @@ ADSL 非对称数字用户环路。
 
 
 
+## pyspider框架
+
+爬虫框架，让我们可以不必关系爬虫的全部流程，异常处理、任务调度等，只需要关注爬虫核心业务逻辑即可。
+
+爬虫框架提高开发效率和爬虫的健壮性。
+
+pyspider是由国人binux编写的网络爬虫系统，GitHub地址为：<https://github.com/binux/pyspider>
+
+优点：pyspider带有强大的WebUI、脚本编辑器、任务监控器、项目管理器以及结果处理器，它支持多种数据库、多种消息队列、JavaScript渲染页面等待爬取，使用方便。
+
+
+
+##### pyspider 与 scrapy 的区别
+
+1. pyspider提供了WebUI，Scrapy原始不提供，可通过Portia对接实现可视化配置；
+2. pyspdier调试方便、WebUI操作便捷直观，Scrapy使用parse命令进行调试，方便程度不及pyspider；
+3. pyspider内置pyquery作为选择器，Scrapy对接了XPath、CSS选择器和正则匹配；
+4. pysider的可扩展程度不及Scrapy，可配置程度不高。Scrapy可以对接Middleware、Pipeline、Extension等组件实现非常强大的功能、模块之间的耦合程度低、可扩张程度高。
+
+
+
+要快速实现一个页面的抓取，推荐pyspider,开发便捷。
+
+应对反扒程度强、大规模的爬取 、推荐Scrapy，如抓取封IP、分帐号、高频验证的网站的大规模采集数据。
+
+##### pyspider的架构
+
+主要分为Scheduler(调度器)、Fetcher(抓取器)、Proccesser(处理器)三个部分，整个爬取过程受到了Monitor(监控器)，抓取的结构被Result Worker(结果处理器)处理。
+
+![](./images/pyspider架gou.png)
+
+
+
+Scheduler发起任务调度，Fetcher负责抓取页面，Processer负责解析网页内容，然后将新生成的Request发给Scheduler进行调度，将生成的提取结果输出保存。
+
+
+
+##### 基本使用
+
+Handler是pyspider爬虫的主类，可以在此定义爬取、解析、存储的逻辑。整个爬虫的功能只需要一个Handler即可。
+
+* carwl_config：将项目的所有爬取配置统一定义到这，如定义Headers、设置代理等，配置之后全局全局生效。
+* on_start()：爬取入口，初始的爬取请求会在这里产生，该方法通过调用crawl()方法既可以创建一个新的爬取请求，第一个参数是爬取的URL，另一个参数callback指定这个页面爬取成功后用哪个方法进行解析，代码中指定为index_page()方法。
+
+
+
+
+
+### Scrapy框架
+
+基于Twisted的异步处理框架，是纯Python实现的爬虫框架，架构清晰，模块之间的耦合度低，可扩展性强，可以灵活完成各种需求。
+
+#### 架构
+
+
+
+![](./images/Scrap架构.png)
+
+
+
+
+
+|          模块          |                             作用                             |
+| :--------------------: | :----------------------------------------------------------: |
+|         Engine         | 引擎，处理整个系统的数据流处理、触发事务，是整个框架的核心。 |
+|          Item          | 项目，定义了爬取结果的数据结构，爬出的数据结构会被赋值成该Item对象。 |
+|       Scheduler        | 调度器，接受引擎发过来的请求并将其加入到队列中，在引擎再次请求的时候提供给引擎。 |
+|       Downloader       |        下载器，下载网页内容，并将网页内容返回给蜘蛛。        |
+|        Spiders         | 蜘蛛，其定义了爬取的逻辑和网页的解析规则，它主要负责解析响应并生成提取结果和新的请求。 |
+|     Item Pipeline      | 项目管道，负责处理由蜘蛛到网页中抽取的项目，他的主要任务是清洗、验证和存储数据。 |
+| Downloader MIddlewares | 下载器中间件，位于引擎和下载器之间的钩子框架，主要处理引擎与下载器之间的请求及响应。 |
+|   Spider MiddlewARES   | 蜘蛛中间件，位于引擎和蜘蛛之间的钩子框架，主要处理蜘蛛输入的响应和输出的结果及新的请求。 |
+
+
+
+#### 目录介绍
+
+![](./images/scrapy目录介绍.jpg)
+
+
+
+
+
+
+
 ## 案例
 
 ### 猫眼爬取
@@ -2144,3 +2313,7 @@ if __name__ == '__main__':
     time.sleep(3)
     boos.chrome.close()
 ```
+
+
+
+### 微信公众号的爬取
